@@ -1,0 +1,37 @@
+# --- DATA: never commit patient audio, transcripts, or derived features ---
+data/raw/
+data/interim/
+data/processed/
+data/**/*.wav
+data/**/*.mp3
+data/**/*.cha
+data/**/*.csv
+*.wav
+*.mp3
+*.flac
+
+# --- Secrets ---
+.env
+*.key
+
+# --- Models / caches ---
+models/
+*.pt
+*.bin
+.cache/
+.huggingface/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+.uv/
+uv.lock.local
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# --- OS / editors ---
+.DS_Store
+.idea/
+.vscode/

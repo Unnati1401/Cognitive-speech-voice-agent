@@ -1,0 +1,53 @@
+# Central config for the Cognitive Speech Screening Agent.
+# Research demo only. Not a medical device. Clinician-in-the-loop.
+
+paths:
+  raw_audio: data/raw          # source audio (gitignored)
+  interim: data/interim        # diarized/transcribed intermediates
+  processed: data/processed    # feature tables for modeling
+  models: models               # trained scorer artifacts
+
+task:
+  # The validated open-ended task the analysis is anchored to.
+  type: picture_description     # picture_description | open_prompt
+  min_duration_sec: 30          # agent asks for re-record below this
+  target_speaker: patient       # analyze this diarized speaker only
+
+diarization:
+  model: pyannote/speaker-diarization-3.1
+  # Requires a HuggingFace token with the model terms accepted. See README.
+
+transcription:
+  engine: faster-whisper
+  model_size: large-v3          # use "small" or "medium" on Mac/CPU for speed
+  compute_type: int8            # Mac/CPU: int8. NVIDIA GPU: float16.
+  language: en
+
+markers:
+  # Toggle families on/off; all feed the report and (optionally) the scorer.
+  timing: true
+  vocabulary: true
+  grammar: true
+  coherence: true
+  spacy_model: en_core_web_sm
+  coherence_embedder: sentence-transformers/all-MiniLM-L6-v2
+
+scoring:
+  approach: hybrid              # handcrafted | embeddings | hybrid (Path E)
+  model: xgboost                # xgboost | logistic
+  split: speaker_independent    # NON-NEGOTIABLE: never split by utterance
+  n_folds: 5
+  embeddings_backbone: facebook/hubert-base-ls960   # only used if approach != handcrafted
+
+report:
+  provider: anthropic           # anthropic | openai | local_llama
+  model: claude-sonnet-5
+  grounded_only: true           # LLM may only use values in the fact sheet
+  validate_numbers: true        # post-check: every number in report exists in fact sheet
+  template: src/cognitive_speech_agent/templates/report.md.j2
+
+safety:
+  disclaimer: >
+    Research screening demonstration only. Not a diagnosis and not a medical device.
+    Results are cognitive-linguistic markers, not validated clinical test scores.
+    A licensed clinician must review all output.
