@@ -1,85 +1,140 @@
 # Cognitive Speech Screening Agent
 
-A voice-based AI agent that listens to a short, open-ended speech sample (a picture
-description), extracts interpretable **cognitive-linguistic markers**, scores them, and drafts a
-**screening report** for a clinician to review.
+An AI agent that listens to a short picture-description clip, extracts interpretable
+**cognitive-linguistic markers** (pauses, vocabulary diversity, syntactic complexity,
+discourse coherence), scores them, and drafts a **grounded screening report** for a
+clinician to review.
 
 > **Research demonstration only. Not a diagnosis and not a medical device.**
-> Outputs are speech markers and a screening flag, not validated clinical test scores.
-> A licensed clinician must review all output. See `DATA_POLICY.md`.
+> Outputs are speech markers and a screening flag, never validated clinical test scores.
+> A licensed clinician must review all output.
 
-## Pipeline (five tools + an agent loop)
+The design rule throughout: **the model computes the truth, the LLM only narrates it.**
+Every number in a report is produced by deterministic code and a trained classifier; the
+language model writes the surrounding prose and is checked so it cannot invent figures.
+
+---
+
+## How it works
+
+The agent is built from five tools wired together by an orchestrator:
 
 ```
-diarize -> transcribe -> extract markers -> score -> report
-(pyannote) (Whisper)     (spaCy/openSMILE)  (XGBoost) (grounded LLM)
+diarize ─▶ transcribe ─▶ extract markers ─▶ score ─▶ report
+(pyannote)  (Whisper)     (spaCy/openSMILE)  (XGBoost)  (grounded LLM)
 ```
 
-The orchestrator (`orchestrator.py`) sequences these as a stateful agent, with the design rule:
-**the model computes the truth, the LLM only narrates it.**
+- **Diarize** — separate the patient's voice from the clinician's (skippable for single-speaker clips).
+- **Transcribe** — faster-whisper produces text with word-level timestamps.
+- **Markers** — four families: timing (pauses, speech rate, fillers), vocabulary (lexical
+  diversity, vague-word use), grammar (sentence length, idea density), coherence (topic drift,
+  Cookie-Theft information units).
+- **Score** — a classifier trained with a **speaker-independent** split; outputs a risk
+  probability plus per-marker flags versus healthy-control norms.
+- **Report** — an LLM writes the narrative from a structured fact sheet; a guardrail strips any
+  number it wasn't given.
 
-## Setup (uv + local CUDA GPU)
+The **orchestrator** runs these as one stateful `run_session()` call and makes decisions (e.g.
+if a clip is too short or empty it stops and asks for a re-record instead of scoring bad data).
 
-Prerequisites: [uv](https://docs.astral.sh/uv/), and system `ffmpeg`
-(`sudo apt install ffmpeg` / `brew install ffmpeg`).
+---
+
+## Status
+
+Pipeline built and tested end to end. **Awaiting research data access** (see below) before the
+scorer can be trained on real recordings and reported with meaningful accuracy.
+
+| Phase | What | Status |
+| --- | --- | --- |
+| 0 | Project scaffold, environment (uv), data policy | ✅ Done |
+| 1 | Diarize + transcribe + marker extraction | ✅ Done |
+| 2 | Feature table + speaker-independent scorer | ✅ Done |
+| 3 | Grounded LLM report + anti-hallucination guardrail | ✅ Done |
+| 4 | Agent orchestrator (`run_session`, re-record logic) | ✅ Done |
+| 5 | Gradio web UI + deployable Hugging Face Space | ✅ Done |
+| 6 | Evaluation + writeup on real data (AUC/F1, ablation) | ⏳ Pending data |
+
+Everything runs today on your own recordings or synthetic clips; the current model is trained on
+placeholder data, so its scores demonstrate the pipeline rather than any clinical signal.
+
+## Data
+
+The system is designed around the **ADReSS / DementiaBank** Cookie-Theft corpus and the
+**PROCESS** challenge corpus (picture description + verbal fluency, with healthy / MCI / dementia
+labels). Both are access-controlled because the recordings are sensitive clinical data.
+
+**We are currently waiting on data access** — requests to DementiaBank (TalkBank consortium) and
+to the PROCESS challenge organizers are pending. Development proceeds in parallel on
+self-recorded and synthetic clips; the labeled corpus is only needed for Phase 6 (honest
+evaluation) and slots into the same pipeline via a manifest CSV the moment access arrives.
+
+---
+
+## Setup (uv)
+
+Prerequisites: [uv](https://docs.astral.sh/uv/) and system `ffmpeg`.
 
 ```bash
-# 1. install deps (creates .venv, resolves CUDA torch from the pytorch index)
 uv sync --extra app --extra dev
-
-# 2. spaCy English model
 uv run python -m spacy download en_core_web_sm
 
-# 3. HuggingFace token for pyannote diarization
-#    - accept model terms at hf.co/pyannote/speaker-diarization-3.1
-#    - then:
-echo "HF_TOKEN=hf_xxx" >> .env
+# secrets in a local .env (auto-loaded; never committed)
+echo "OPENAI_API_KEY=sk-..." >> .env      # for the report step
+echo "HF_TOKEN=hf_..."       >> .env      # only for diarization (two speakers)
 
-# 4. LLM key for the report writer (Anthropic by default; see config.yaml)
-echo "ANTHROPIC_API_KEY=sk-ant-xxx" >> .env
-
-# 5. verify everything
-uv run python scripts/check_env.py
-
-# 6. create local data folders (gitignored)
-mkdir -p data/raw data/interim data/processed
+uv run python scripts/check_env.py        # verify the toolchain
 ```
 
-## Configuration
+## Usage
 
-All knobs live in `config.yaml` (task type, Whisper size, marker toggles, scoring approach,
-report provider, safety disclaimer). Code reads it via `config.load_config()`.
+```bash
+# run the whole agent on one clip (audio -> written report)
+uv run python scripts/run_agent.py clip.wav --model small --out report.md
+
+# just see the markers for a clip
+uv run python scripts/run_markers.py clip.wav --model small
+
+# build a feature table + train the scorer (speaker-independent CV)
+uv run python scripts/build_features.py --audio-dir data/raw --out data/processed/features.csv
+uv run python scripts/train_scorer.py
+
+# launch the web UI (upload / record / click a sample)
+uv run python scripts/app.py
+```
+
+Run the tests:
+
+```bash
+uv run pytest -q
+```
+
+---
 
 ## Project layout
 
 ```
 cognitive-speech-agent/
-  config.yaml                 # single source of truth
-  DATA_POLICY.md              # ethics + data-handling rules (read first)
-  scripts/check_env.py        # Phase 0 environment verification
-  docs/dementiabank_access_email.md
-  src/cognitive_speech_agent/
-    diarize.py     transcribe.py   markers.py
-    scoring.py     report.py       orchestrator.py   config.py
-  data/                       # gitignored; no patient data in git
-  tests/
+├── app.py                       # Hugging Face Space entry point
+├── config.yaml                  # single source of truth (tasks, models, thresholds, safety)
+├── requirements.txt packages.txt# Space deps
+├── src/cognitive_speech_agent/
+│   ├── diarize.py transcribe.py markers.py     # tools 1–3
+│   ├── scoring.py report.py llm.py             # tools 4–5
+│   ├── orchestrator.py                         # the agent loop
+│   └── config.py                               # config + .env loader
+├── scripts/                     # runnable entry points (agent, training, UI, samples)
+├── assets/samples/              # demo clips for the web UI
+├── tests/                       # unit tests for every phase
+└── docs/                        # data-access request emails, notes
 ```
 
-## Data
+## Ethics & safety
 
-Primary: **ADReSS** (balanced Pitt-corpus subset, 156 participants) via the DementiaBank
-consortium; request access with `docs/dementiabank_access_email.md`.
-Fallback while access is pending: the open **PROCESS / PROCESS-2** cognitive-impairment speech
-corpus. Set paths in `config.yaml`.
+- Framed as a **screening research demo, not a diagnostic tool**; clinician always in the loop.
+- Only consented research datasets; recordings and derived features stay local and are gitignored.
+- **Speaker-independent** train/test splits only (never split by utterance).
+- Honest limitations reporting: dataset scope, demographic coverage, and generalization caveats.
 
-## Roadmap
+## License
 
-- **Phase 0 (this scaffold):** environment, access request, data policy. ✅ when `check_env.py` passes.
-- **Phase 1:** implement diarize/transcribe/markers.
-- **Phase 2:** train the scorer (speaker-independent split).
-- **Phase 3:** grounded report writer + number-validation guardrail.
-- **Phase 4:** agent orchestration loop.
-- **Phase 5:** Gradio demo.
-- **Phase 6:** evaluation, ablation, writeup.
-
-Full detail in the build spec.
+MIT.
