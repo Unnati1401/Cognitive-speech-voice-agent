@@ -44,6 +44,29 @@ DISCLAIMER = CFG.get("safety", {}).get("disclaimer", "Research demo. Not a medic
 SAMPLES_DIR = REPO_ROOT / "assets" / "samples"
 SAMPLE_FILES = sorted(str(p) for p in SAMPLES_DIR.glob("*.wav")) if SAMPLES_DIR.exists() else []
 
+
+def _bootstrap_model():
+    """Retrain the demo scorer at startup so it matches THIS environment's
+    scikit-learn. A model pickled elsewhere fails with version-mismatch errors
+    (e.g. 'LogisticRegression has no attribute multi_class')."""
+    import copy
+
+    feats = REPO_ROOT / "assets" / "demo_features.csv"
+    if not feats.exists():
+        return
+    try:
+        from cognitive_speech_agent import scoring
+
+        cfg = copy.deepcopy(CFG)
+        cfg.setdefault("scoring", {})["model"] = "logistic"   # light + deterministic
+        scoring.train(str(feats), cfg)
+        print(f"Demo scorer retrained from {feats}")
+    except Exception as e:  # noqa: BLE001
+        print(f"Model bootstrap skipped: {e}")
+
+
+_bootstrap_model()
+
 # --- simple global rate limit (protects the OpenAI bill on a public demo) ---
 MAX_ANALYSES_PER_HOUR = 40
 _CALL_TIMES: list[float] = []
