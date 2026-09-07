@@ -1,15 +1,7 @@
-# Runtime deps for the Hugging Face Space.
-# Gradio 4.44.1 pinned WITH its contemporary stack — newer starlette/fastapi/
-# pydantic/huggingface_hub break 4.44.x (TemplateResponse dict error, HfFolder
-# import, bool-schema crash). These versions are known to work together.
-gradio==4.44.1
-gradio_client==1.3.0
-fastapi==0.114.2
-starlette==0.38.6
-huggingface_hub==0.25.2
-pydantic==2.8.2
-
-# torch/torchaudio install the CPU build from PyPI on Spaces (Linux), which is fine.
+# Runtime deps for the Hugging Face Space — EXTRAS ONLY.
+# Do NOT pin gradio / gradio_client / starlette / fastapi / pydantic / huggingface_hub
+# here. The Gradio SDK Space already installs a coherent set of those; pinning them
+# is what caused the HfFolder / bool-schema / TemplateResponse crashes.
 numpy>=1.26
 pandas>=2.2
 scipy>=1.13
@@ -28,4 +20,3 @@ transformers>=4.44
 scikit-learn>=1.5
 xgboost>=2.1
 openai>=1.40
-jinja2>=3.1
