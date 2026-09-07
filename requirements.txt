@@ -2,6 +2,7 @@
 # Do NOT pin gradio / gradio_client / starlette / fastapi / pydantic / huggingface_hub
 # here. The Gradio SDK Space already installs a coherent set of those; pinning them
 # is what caused the HfFolder / bool-schema / TemplateResponse crashes.
+spaces          # required for ZeroGPU (@spaces.GPU)
 numpy>=1.26
 pandas>=2.2
 scipy>=1.13
