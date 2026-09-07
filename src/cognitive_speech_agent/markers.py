@@ -76,7 +76,8 @@ def _nlp():
 def _embedder(model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
     from sentence_transformers import SentenceTransformer  # lazy
 
-    return SentenceTransformer(model_name)
+    # Force CPU (HF ZeroGPU reports CUDA available but the CUDA libs aren't usable).
+    return SentenceTransformer(model_name, device="cpu")
 
 
 def _safe(v: float) -> float:

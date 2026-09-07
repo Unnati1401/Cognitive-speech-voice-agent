@@ -52,9 +52,11 @@ class Session:
 
 def _default_transcribe(config: dict):
     t = config["transcription"]
+    # Force CPU: on HF ZeroGPU torch reports CUDA available but the CUDA math
+    # libs (libcublas) aren't loadable for CTranslate2. This app is CPU-only.
     return lambda path: transcribe(
         path, model_size=t["model_size"], compute_type=t["compute_type"],
-        language=t["language"],
+        language=t["language"], device="cpu",
     )
 
 
