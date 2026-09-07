@@ -25,10 +25,22 @@ class SpeakerSegment:
         return self.start <= t <= self.end
 
 
-def diarize(audio_path: str, hf_token: str | None = None) -> list[SpeakerSegment]:
-    """Return speaker-labeled time segments for an audio file."""
+def _load_pipeline(token: str):
+    """Load the pyannote pipeline, tolerating both old and new arg names.
+
+    Newer pyannote.audio uses token=..., older versions use use_auth_token=...
+    """
     from pyannote.audio import Pipeline  # lazy
 
+    name = "pyannote/speaker-diarization-3.1"
+    try:
+        return Pipeline.from_pretrained(name, token=token)          # new API
+    except TypeError:
+        return Pipeline.from_pretrained(name, use_auth_token=token)  # old API
+
+
+def diarize(audio_path: str, hf_token: str | None = None) -> list[SpeakerSegment]:
+    """Return speaker-labeled time segments for an audio file."""
     token = hf_token or os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
     if not token:
         raise RuntimeError(
@@ -36,9 +48,7 @@ def diarize(audio_path: str, hf_token: str | None = None) -> list[SpeakerSegment
             "pyannote/speaker-diarization-3.1 and set HF_TOKEN in your environment."
         )
 
-    pipeline = Pipeline.from_pretrained(
-        "pyannote/speaker-diarization-3.1", use_auth_token=token
-    )
+    pipeline = _load_pipeline(token)
 
     # Move to GPU if available (pyannote runs in pure PyTorch, supports cuda/mps).
     try:
