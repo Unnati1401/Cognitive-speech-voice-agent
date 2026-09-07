@@ -1,10 +1,15 @@
-# Runtime deps for the Hugging Face Space (Spaces installs this file).
-# torch/torchaudio install the CPU build from PyPI on Spaces (Linux), which is fine.
-ggradio==4.44.1
-fastapi==0.112.2
+# Runtime deps for the Hugging Face Space.
+# Gradio 4.44.1 pinned WITH its contemporary stack — newer starlette/fastapi/
+# pydantic/huggingface_hub break 4.44.x (TemplateResponse dict error, HfFolder
+# import, bool-schema crash). These versions are known to work together.
+gradio==4.44.1
+gradio_client==1.3.0
+fastapi==0.114.2
 starlette==0.38.6
-# gradio 4.44 imports HfFolder, which huggingface_hub 1.x removed -> keep hub < 1.0
-huggingface_hub>=0.23,<1.0
+huggingface_hub==0.25.2
+pydantic==2.8.2
+
+# torch/torchaudio install the CPU build from PyPI on Spaces (Linux), which is fine.
 numpy>=1.26
 pandas>=2.2
 scipy>=1.13
