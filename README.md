@@ -1,3 +1,15 @@
+---
+title: Cognitive Speech Screening
+emoji: 🧠
+colorFrom: indigo
+colorTo: blue
+sdk: gradio
+sdk_version: 4.44.0
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # Cognitive Speech Screening Agent
 
 An AI agent that listens to a short picture-description clip, extracts interpretable
@@ -7,7 +19,8 @@ clinician to review.
 
 > **Research demonstration only. Not a diagnosis and not a medical device.**
 > Outputs are speech markers and a screening flag, never validated clinical test scores.
-> A licensed clinician must review all output.
+> A licensed clinician must review all output. Scores in the hosted demo come from a
+> placeholder model trained on synthetic clips; they show the pipeline, not clinical signal.
 
 The design rule throughout: **the model computes the truth, the LLM only narrates it.**
 Every number in a report is produced by deterministic code and a trained classifier; the
@@ -134,7 +147,3 @@ cognitive-speech-agent/
 - Only consented research datasets; recordings and derived features stay local and are gitignored.
 - **Speaker-independent** train/test splits only (never split by utterance).
 - Honest limitations reporting: dataset scope, demographic coverage, and generalization caveats.
-
-## License
-
-MIT.
