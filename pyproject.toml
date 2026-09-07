@@ -30,7 +30,7 @@ dependencies = [
     "scikit-learn>=1.5",
     "xgboost>=2.1",
     # --- Report writer (LLM) ---
-    "anthropic>=0.34",              # or swap for openai; see config.yaml
+    "openai>=1.40",              # or swap for openai; see config.yaml
     "jinja2>=3.1",                  # report template scaffolding
 ]
 

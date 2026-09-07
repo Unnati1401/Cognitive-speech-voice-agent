@@ -10,7 +10,7 @@ paths:
 task:
   # The validated open-ended task the analysis is anchored to.
   type: picture_description     # picture_description | open_prompt
-  min_duration_sec: 30          # agent asks for re-record below this
+  min_duration_sec: 3          # agent asks for re-record below this
   target_speaker: patient       # analyze this diarized speaker only
 
 diarization:
@@ -40,8 +40,8 @@ scoring:
   embeddings_backbone: facebook/hubert-base-ls960   # only used if approach != handcrafted
 
 report:
-  provider: anthropic           # anthropic | openai | local_llama
-  model: claude-sonnet-5
+  provider: openai           # anthropic | openai | local_llama
+  model: gpt-4o
   grounded_only: true           # LLM may only use values in the fact sheet
   validate_numbers: true        # post-check: every number in report exists in fact sheet
   template: src/cognitive_speech_agent/templates/report.md.j2
