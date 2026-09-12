@@ -66,10 +66,29 @@ scorer can be trained on real recordings and reported with meaningful accuracy.
 | 3 | Grounded LLM report + anti-hallucination guardrail | ✅ Done |
 | 4 | Agent orchestrator (`run_session`, re-record logic) | ✅ Done |
 | 5 | Gradio web UI + deployable Hugging Face Space | ✅ Done |
-| 6 | Evaluation + writeup on real data (AUC/F1, ablation) | ⏳ Pending data |
+| 6 | Evaluation + writeup on real data (AUC/F1, ablation) | ✅ Done |
 
-Everything runs today on your own recordings or synthetic clips; the current model is trained on
-placeholder data, so its scores demonstrate the pipeline rather than any clinical signal.
+## Results (PROCESS-2, Cookie Theft task)
+
+Trained on the official PROCESS-2 split (320 participants) and evaluated on the held-out test
+set (80 unseen participants), collapsing MCI + Dementia into "impaired" vs. healthy controls.
+Interpretable hand-built markers + a logistic-regression scorer, speaker-independent throughout.
+
+| Evaluation | AUC-ROC | F1 | Accuracy |
+| --- | --- | --- | --- |
+| Held-out official test (n=80) | **0.795** | 0.68 | 0.70 |
+| Speaker-independent CV (train, n=320) | 0.66 | 0.61 | 0.63 |
+
+Held-out confusion matrix `[[TN 30, FP 10], [FN 14, TP 26]]` → ~65% sensitivity, 75% specificity.
+
+**Which markers carry the signal (CV AUC, each family alone):** coherence 0.68 · timing 0.66 ·
+grammar 0.59 · vocabulary 0.58. Discourse coherence and speech-timing markers are the most
+informative, consistent with the cognitive-linguistic literature.
+
+**Honest context:** the dataset's own best Cookie-Theft baseline is F1 ≈ 0.85 using a fine-tuned
+DistilBERT over transcripts. This project deliberately trades a few points of raw performance for
+**full interpretability** — every prediction traces back to specific, named speech markers — which
+is the intended contribution rather than a leaderboard score.
 
 ## Data
 
@@ -77,10 +96,11 @@ The system is designed around the **ADReSS / DementiaBank** Cookie-Theft corpus 
 **PROCESS** challenge corpus (picture description + verbal fluency, with healthy / MCI / dementia
 labels). Both are access-controlled because the recordings are sensitive clinical data.
 
-**We are currently waiting on data access** — requests to DementiaBank (TalkBank consortium) and
-to the PROCESS challenge organizers are pending. Development proceeds in parallel on
-self-recorded and synthetic clips; the labeled corpus is only needed for Phase 6 (honest
-evaluation) and slots into the same pipeline via a manifest CSV the moment access arrives.
+Results above use **PROCESS-2** (CognoSpeak), a controlled-access corpus of 400 participants
+(HC / MCI / Dementia) with an official train/test split, loaded via `datasets.load_dataset`.
+Access is granted under the PROCESS-2 Data Use Agreement; the recordings and any derived feature
+tables are **not** redistributed here (kept local, gitignored) — only the trained model and
+aggregate metrics are shared, per the DUA.
 
 ---
 

@@ -32,6 +32,8 @@ dependencies = [
     # --- Report writer (LLM) ---
     "openai>=1.40",              # or swap for openai; see config.yaml
     "jinja2>=3.1",                  # report template scaffolding
+    "matplotlib>=3.10.9",
+    "datasets>=5.0.1",
 ]
 
 [project.optional-dependencies]

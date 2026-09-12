@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 """Phase 2, step 1: batch the Phase 1 pipeline over many recordings -> one CSV.
 
@@ -44,6 +43,7 @@ def _iter_manifest(path: str):
             "label": str(r["label"]),
             "mmse": r.get("mmse", ""),
             "task": str(r.get("task", "")) or None,
+            "split": str(r.get("split", "")),
         }
 
 
@@ -52,7 +52,7 @@ def _iter_folder(root: str):
         for f in sorted(label_dir.rglob("*")):
             if f.suffix.lower() in AUDIO_EXT:
                 yield {"audio_path": str(f), "speaker_id": f.stem,
-                       "label": label_dir.name, "mmse": "", "task": None}
+                       "label": label_dir.name, "mmse": "", "task": None, "split": ""}
 
 
 def _one_recording(item: dict, cfg: dict, model: str, do_diarize: bool) -> dict | None:
@@ -67,7 +67,7 @@ def _one_recording(item: dict, cfg: dict, model: str, do_diarize: bool) -> dict 
     feats = M.extract_markers(tr, task_type=task, families=cfg["markers"],
                               embedder_name=cfg["markers"]["coherence_embedder"])
     row = {"id": Path(item["audio_path"]).stem, "speaker_id": item["speaker_id"],
-           "label": item["label"], "mmse": item["mmse"]}
+           "label": item["label"], "mmse": item["mmse"], "split": item.get("split", "")}
     row.update(feats)
     return row
 

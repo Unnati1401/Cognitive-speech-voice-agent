@@ -1,0 +1,57 @@
+{
+  "model": "xgboost",
+  "n_features": 35,
+  "n_rows": 400,
+  "official_test": {
+    "n": 80,
+    "n_positive": 40,
+    "auc": 0.76375,
+    "f1": 0.7228915662650602,
+    "accuracy": 0.7125,
+    "confusion_matrix": [
+      [
+        27,
+        13
+      ],
+      [
+        10,
+        30
+      ]
+    ]
+  },
+  "cv": {
+    "n": 320,
+    "n_positive": 160,
+    "auc": 0.641875,
+    "f1": 0.5859872611464968,
+    "accuracy": 0.59375,
+    "confusion_matrix": [
+      [
+        98,
+        62
+      ],
+      [
+        68,
+        92
+      ]
+    ]
+  },
+  "ablation": {
+    "timing": {
+      "n_features": 12,
+      "auc": 0.579921875
+    },
+    "vocabulary": {
+      "n_features": 8,
+      "auc": 0.551875
+    },
+    "grammar": {
+      "n_features": 9,
+      "auc": 0.6415234375000001
+    },
+    "coherence": {
+      "n_features": 6,
+      "auc": 0.6145703124999999
+    }
+  }
+}

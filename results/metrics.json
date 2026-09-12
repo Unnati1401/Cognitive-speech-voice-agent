@@ -1,0 +1,57 @@
+{
+  "model": "logistic",
+  "n_features": 35,
+  "n_rows": 400,
+  "official_test": {
+    "n": 80,
+    "n_positive": 40,
+    "auc": 0.7949999999999999,
+    "f1": 0.6842105263157895,
+    "accuracy": 0.7,
+    "confusion_matrix": [
+      [
+        30,
+        10
+      ],
+      [
+        14,
+        26
+      ]
+    ]
+  },
+  "cv": {
+    "n": 320,
+    "n_positive": 160,
+    "auc": 0.6614453124999999,
+    "f1": 0.6098360655737705,
+    "accuracy": 0.628125,
+    "confusion_matrix": [
+      [
+        108,
+        52
+      ],
+      [
+        67,
+        93
+      ]
+    ]
+  },
+  "ablation": {
+    "timing": {
+      "n_features": 12,
+      "auc": 0.6593359374999999
+    },
+    "vocabulary": {
+      "n_features": 8,
+      "auc": 0.5844921875
+    },
+    "grammar": {
+      "n_features": 9,
+      "auc": 0.5850390625
+    },
+    "coherence": {
+      "n_features": 6,
+      "auc": 0.6806249999999998
+    }
+  }
+}

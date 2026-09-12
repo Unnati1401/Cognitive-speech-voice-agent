@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 # Columns that are metadata, never model features.
-NON_FEATURE = {"id", "speaker_id", "label", "y", "mmse", "text", "audio_path", "task"}
+NON_FEATURE = {"id", "speaker_id", "label", "y", "mmse", "text", "audio_path", "task", "split"}
 
 
 @dataclass
