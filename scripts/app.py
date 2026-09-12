@@ -51,6 +51,10 @@ def _bootstrap_model():
     (e.g. 'LogisticRegression has no attribute multi_class')."""
     import copy
 
+    models_dir = REPO_ROOT / "models"
+    if (models_dir / "scorer.json").exists() or (models_dir / "scorer.joblib").exists():
+        return  # a real/shipped model is present -> never overwrite it
+
     feats = REPO_ROOT / "assets" / "demo_features.csv"
     if not feats.exists():
         return

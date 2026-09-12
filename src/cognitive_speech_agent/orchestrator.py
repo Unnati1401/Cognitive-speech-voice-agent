@@ -62,10 +62,14 @@ def _default_transcribe(config: dict):
 
 def _default_score(config: dict):
     models_dir = Path(config.get("paths", {}).get("models", "models"))
+    # Prefer the version-proof JSON export (used in deployment); fall back to joblib.
+    json_p = models_dir / "scorer.json"
+    if json_p.exists():
+        return lambda feats: scoring.score_json(feats, str(json_p))
     model_p, norms_p = models_dir / "scorer.joblib", models_dir / "norms.json"
     if not model_p.exists():
         raise RuntimeError(
-            "No trained scorer found (models/scorer.joblib). Run Phase 2 first.")
+            "No trained scorer found (models/scorer.json or scorer.joblib). Run Phase 2 first.")
     return lambda feats: scoring.score(feats, str(model_p), str(norms_p))
 
 

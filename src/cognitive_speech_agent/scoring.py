@@ -14,6 +14,7 @@ Artifacts written to models/:
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -178,6 +179,37 @@ def _print_summary(metrics: dict, model, feats: list[str]) -> None:
 
 
 # --- inference ---------------------------------------------------------------
+
+def score_json(markers: dict[str, float], json_path: str) -> ScoreResult:
+    """Version-proof scorer: pure-numpy logistic inference from a JSON export.
+
+    No pickle and no scikit-learn, so it never hits version-mismatch errors, and
+    the JSON carries only weights + summary percentile bands (DUA-safe).
+    """
+    d = json.loads(Path(json_path).read_text())
+    feats = d["feature_names"]
+    med = d.get("medians", {})
+
+    x = np.array([float(markers.get(f, med.get(f, 0.0)) or med.get(f, 0.0)) for f in feats])
+    mean = np.asarray(d["scaler_mean"], dtype=float)
+    scale = np.asarray(d["scaler_scale"], dtype=float)
+    z = (x - mean) / np.where(scale == 0, 1.0, scale)
+    logit = float(np.dot(z, np.asarray(d["coef"], dtype=float)) + d["intercept"])
+    proba = 1.0 / (1.0 + math.exp(-logit))
+    label = "elevated markers" if proba >= d["threshold"] else "within typical range"
+
+    grid = d.get("norm_grid", {})
+    percentiles = {}
+    for f in feats:
+        g = grid.get(f)
+        v = markers.get(f)
+        if g and v is not None:
+            percentiles[f] = float(np.interp(v, g["v"], g["q"]))
+    lo, hi = d["flag_low"], d["flag_high"]
+    flagged = {f: p for f, p in percentiles.items() if p <= lo or p >= hi}
+    return ScoreResult(risk_probability=proba, label=label,
+                       flagged_markers=flagged, percentiles=percentiles)
+
 
 def score(markers: dict[str, float], model_path: str, norms_path: str) -> ScoreResult:
     """Return risk probability + which markers fall outside healthy-control norms."""
