@@ -74,12 +74,18 @@ Trained on the official PROCESS-2 split (320 participants) and evaluated on the 
 set (80 unseen participants), collapsing MCI + Dementia into "impaired" vs. healthy controls.
 Interpretable hand-built markers + a logistic-regression scorer, speaker-independent throughout.
 
-| Evaluation | AUC-ROC | F1 | Accuracy |
-| --- | --- | --- | --- |
-| Held-out official test (n=80) | **0.795** | 0.68 | 0.70 |
-| Speaker-independent CV (train, n=320) | 0.66 | 0.61 | 0.63 |
+Two classifiers were compared on the identical markers and split:
 
-Held-out confusion matrix `[[TN 30, FP 10], [FN 14, TP 26]]` → ~65% sensitivity, 75% specificity.
+| Model | Test AUC | Test F1 | Test Acc | CV AUC (train) |
+| --- | --- | --- | --- | --- |
+| **Logistic regression** (deployed) | **0.795** | 0.68 | 0.70 | **0.66** |
+| XGBoost | 0.764 | 0.72 | 0.71 | 0.64 |
+
+Logistic regression is used for deployment: it has the higher AUC on both the held-out test and
+cross-validation, is interpretable (per-marker weights), and exports to a dependency-free model
+file. On 400 participants the gradient-boosted trees gave no advantage — the expected small-data
+result. Logistic held-out confusion matrix `[[TN 30, FP 10], [FN 14, TP 26]]` → ~65% sensitivity,
+75% specificity.
 
 **Which markers carry the signal (CV AUC, each family alone):** coherence 0.68 · timing 0.66 ·
 grammar 0.59 · vocabulary 0.58. Discourse coherence and speech-timing markers are the most
@@ -161,10 +167,3 @@ cognitive-speech-agent/
 ├── tests/                       # unit tests for every phase
 └── docs/                        # data-access request emails, notes
 ```
-
-## Ethics & safety
-
-- Framed as a **screening research demo, not a diagnostic tool**; clinician always in the loop.
-- Only consented research datasets; recordings and derived features stay local and are gitignored.
-- **Speaker-independent** train/test splits only (never split by utterance).
-- Honest limitations reporting: dataset scope, demographic coverage, and generalization caveats.
